@@ -42,12 +42,18 @@ const STORY_THEMES = [
 const FONTS = [
   { id: 'sans', label: 'Moderna', className: 'font-sans' },
   { id: 'serif', label: 'Livro', className: 'font-serif' },
-  { id: 'handwriting', label: 'Manuscrito PT', className: 'font-handwriting' },
+  { id: 'handwriting', label: '1º Ciclo (Manuscrito)', className: 'font-handwriting' },
 ];
 
 export default function App() {
   const [text, setText] = useState("O rato roeu a rolha da garrafa do rei de Roma. 🐭 O rápido raposo salta sobre o cão preguiçoso! 🦊");
   const [multiplier, setMultiplier] = useState(1); 
+  const multiplierRef = useRef(multiplier);
+
+  useEffect(() => {
+    multiplierRef.current = multiplier;
+  }, [multiplier]);
+
   const [fontSize, setFontSize] = useState(72);
   const [isPlaying, setIsPlaying] = useState(true);
   const [resetKey, setResetKey] = useState(0);
@@ -88,9 +94,9 @@ export default function App() {
         return;
       }
 
-      // Movement step based on multiplier - Increased base speed from 0.8 to 1.2
-      // This allows higher speeds to be significantly faster
-      positionRef.current -= (1.2 * multiplier);
+      // Movement step based on multiplier - Increased base speed for 1x
+      // We use multiplierRef to allow real-time changes without restarting the loop
+      positionRef.current -= (1.5 * multiplierRef.current);
 
       // Reset when off-screen
       const textWidth = textRef.current.offsetWidth;
@@ -106,7 +112,7 @@ export default function App() {
     return () => {
       if (animationIdRef.current) cancelAnimationFrame(animationIdRef.current);
     };
-  }, [isPlaying, multiplier, isGenerating, text, fontFamily]);
+  }, [isPlaying, isGenerating, text, fontFamily]);
 
   const toggleDarkMode = () => {
     if (!isDarkMode) {
@@ -131,7 +137,7 @@ export default function App() {
     try {
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: `Cria uma composição média/longa (história de 6-10 frases, cerca de 80-120 palavras) para uma criança de 8 anos aprender a ler em Português de Portugal. O tema é: ${themePrompt}. O texto deve ser numa linha só (sem quebras de linha), ser cativante, divertido e incluir vários emojis. Usa estritamente Português de Portugal (ex: comboio, autocarro, rabo, cáca, pequeno-almoço, frigorífico). A história deve ter um enredo claro com personagens e uma conclusão engraçada.`,
+        contents: `Cria uma composição literária para o 1º ciclo (história de 8-12 frases, cerca de 100-150 palavras) para uma criança portuguesa de 8 anos. O tema é: ${themePrompt}. O texto deve ser numa linha contínua (sem quebras), ser muito divertido, educativo e incluir emojis adequados. Usa rigorosamente o Português de Portugal (ex: comboio, autocarro, pequeno-almoço, frigorífico, sapatilhas). A história deve ter personagens identificáveis e um final que faça rir.`,
       });
       
       const newStory = response.text?.trim() || "";
