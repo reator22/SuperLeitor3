@@ -42,12 +42,12 @@ const STORY_THEMES = [
 const FONTS = [
   { id: 'sans', label: 'Moderna', className: 'font-sans' },
   { id: 'serif', label: 'Livro', className: 'font-serif' },
-  { id: 'handwriting', label: 'Escolar', className: 'font-handwriting' },
+  { id: 'handwriting', label: 'Manuscrito PT', className: 'font-handwriting' },
 ];
 
 export default function App() {
   const [text, setText] = useState("O rato roeu a rolha da garrafa do rei de Roma. 🐭 O rápido raposo salta sobre o cão preguiçoso! 🦊");
-  const [speed, setSpeed] = useState(15); 
+  const [multiplier, setMultiplier] = useState(1); 
   const [fontSize, setFontSize] = useState(72);
   const [isPlaying, setIsPlaying] = useState(true);
   const [resetKey, setResetKey] = useState(0);
@@ -79,7 +79,7 @@ export default function App() {
   const generateStory = async (themePrompt: string, themeLabel: string) => {
     const ai = getAI();
     if (!ai) {
-      alert("A chave da API (GEMINI_API_KEY) não está configurada. Por favor, configura as Variáveis de Ambiente no Vercel.");
+      alert("A chave da API (GEMINI_API_KEY) não está configurada no Vercel/GitHub. Por favor, adiciona-a nas variáveis de ambiente.");
       return;
     }
     setIsGenerating(true);
@@ -87,7 +87,7 @@ export default function App() {
     try {
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: `Escreve uma história curta e simples (máximo 2-3 frases) para uma criança de 8 anos aprender a ler em Português de Portugal. O tema é: ${themePrompt}. O texto deve ser divertido, ter uma linha só e incluir alguns emojis relacionados. Usa vocabulário adequado para PT-PT (ex: utiliza "autocarro" em vez de "ônibus", etc, se aplicável).`,
+        contents: `Escreve uma história curta e muito simples (máximo 15-20 palavras) para uma criança de 6-8 anos aprender a ler em Português de Portugal. O tema é: ${themePrompt}. O texto deve ser divertido, ter uma linha só e incluir emojis. Usa estritamente Português de Portugal (ex: comboio, autocarro, rabo, cáca).`,
       });
       
       const newStory = response.text?.trim() || "";
@@ -103,6 +103,11 @@ export default function App() {
   };
 
   const currentFont = FONTS.find(f => f.id === fontFamily)?.className || 'font-sans';
+  
+  // Calcular a duração: quanto maior o multiplicador, menor a duração.
+  // Base: 40 caracteres demoram 20 segundos a 1x.
+  const baseDuration = (text.length * 0.5);
+  const duration = baseDuration / multiplier;
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-slate-900' : 'bg-[#F0F7FF]'} font-sans overflow-hidden flex flex-col transition-colors duration-500`}>
@@ -163,7 +168,7 @@ export default function App() {
             initial={{ x: '100vw' }}
             animate={isPlaying ? { x: '-200%' } : {}}
             transition={{
-              duration: speed * (text.length / 40), 
+              duration: duration, 
               repeat: Infinity,
               ease: "linear"
             }}
@@ -198,7 +203,7 @@ export default function App() {
               <div className="bg-white/20 p-2 rounded-xl">
                 <Wand2 className="text-white w-6 h-6" />
               </div>
-              <h2 className="text-xl font-black text-white tracking-wide uppercase">História Mágica (IA)</h2>
+              <h2 className="text-xl font-black text-white tracking-wide uppercase text-shadow-sm">História Mágica (IA)</h2>
               <span className="bg-white/10 text-white/80 px-3 py-1 rounded-full text-xs font-bold ml-auto">
                 Gemini AI
               </span>
@@ -213,7 +218,7 @@ export default function App() {
                   className="flex-1 min-w-[140px] bg-white/10 hover:bg-white/20 border-2 border-white/20 rounded-2xl p-4 text-center transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="text-3xl mb-2 group-hover:scale-125 transition-transform">{theme.icon}</div>
-                  <div className="text-white font-bold text-sm">{theme.label}</div>
+                  <div className="text-white font-bold text-sm tracking-wide">{theme.label}</div>
                 </button>
               ))}
             </div>
@@ -234,7 +239,7 @@ export default function App() {
                   ? 'bg-slate-700 border-slate-600 text-white focus:border-indigo-400' 
                   : 'bg-blue-50 border-blue-100 text-slate-700 focus:border-blue-400'
                 }`}
-                placeholder="Escreve aqui o que queres que o teu filho leia..."
+                placeholder="Escreve aqui a frase ou história..."
                 id="reader-text-input"
               />
             </div>
@@ -255,10 +260,10 @@ export default function App() {
                       onClick={() => setFontFamily(f.id)}
                       className={`flex-1 py-2 px-3 rounded-xl border-2 font-bold transition-all ${
                         fontFamily === f.id
-                        ? 'bg-indigo-500 text-white border-indigo-500'
+                        ? 'bg-indigo-500 text-white border-indigo-500 shadow-md'
                         : isDarkMode 
-                          ? 'bg-slate-700 border-slate-600 text-slate-300'
-                          : 'bg-slate-50 border-slate-200 text-slate-600'
+                          ? 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-white'
                       } ${f.className}`}
                     >
                       {f.label}
@@ -271,11 +276,11 @@ export default function App() {
               <div className="space-y-4">
                 <label className={`flex items-center gap-2 text-sm font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                   <Palette className="w-4 h-4 text-pink-500" />
-                  <span>Cores Personalizadas</span>
+                  <span>Cores do Ecrã</span>
                 </label>
                 <div className="flex gap-4">
                   <div className="flex-1 space-y-2">
-                    <span className="text-xs font-bold text-slate-400">Texto</span>
+                    <span className="text-[10px] uppercase font-black text-slate-400">Letras</span>
                     <input 
                       type="color" 
                       value={textColor}
@@ -284,7 +289,7 @@ export default function App() {
                     />
                   </div>
                   <div className="flex-1 space-y-2">
-                    <span className="text-xs font-bold text-slate-400">Fundo</span>
+                    <span className="text-[10px] uppercase font-black text-slate-400">Fundo</span>
                     <input 
                       type="color" 
                       value={bgColor}
@@ -300,22 +305,31 @@ export default function App() {
                 <div className="flex justify-between items-center">
                   <label className={`flex items-center gap-2 text-sm font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                     <Zap className="w-4 h-4 text-orange-500" />
-                    <span>Velocidade</span>
+                    <span>Mult. Velocidade</span>
                   </label>
-                  <span className={`px-3 py-1 rounded-full text-xs font-black ${isDarkMode ? 'bg-orange-900 text-orange-200' : 'bg-orange-100 text-orange-600'}`}>
-                    {speed >= 30 ? 'Muito Lento' : speed >= 15 ? 'Normal' : speed >= 8 ? 'Rápido' : 'Relâmpago!'}
+                  <span className={`px-3 py-1 rounded-full text-xs font-black ${isDarkMode ? 'bg-orange-950 text-orange-200' : 'bg-orange-100 text-orange-600'}`}>
+                    {multiplier}x
                   </span>
                 </div>
-                <input 
-                  type="range" 
-                  min="2" 
-                  max="40" 
-                  step="1"
-                  value={42 - speed} 
-                  onChange={(e) => setSpeed(42 - parseInt(e.target.value))}
-                  className="w-full h-3 bg-blue-100 rounded-lg appearance-none cursor-pointer accent-orange-500"
-                  id="speed-range"
-                />
+                <div className="space-y-2">
+                  <input 
+                    type="range" 
+                    min="1" 
+                    max="5" 
+                    step="1"
+                    value={multiplier} 
+                    onChange={(e) => setMultiplier(parseInt(e.target.value))}
+                    className="w-full h-3 bg-blue-100 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                    id="speed-range"
+                  />
+                  <div className="flex justify-between text-[10px] font-bold text-slate-400 px-1">
+                    <span>1x</span>
+                    <span>2x</span>
+                    <span>3x</span>
+                    <span>4x</span>
+                    <span>5x</span>
+                  </div>
+                </div>
               </div>
 
               {/* Font Size Control */}
@@ -356,7 +370,7 @@ export default function App() {
                   {isPlaying ? (
                     <>
                       <div className="w-3 h-3 bg-current rounded-sm shadow-sm" />
-                      <span>Parar</span>
+                      <span>Pausar</span>
                     </>
                   ) : (
                     <>
