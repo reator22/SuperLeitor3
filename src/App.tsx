@@ -19,7 +19,8 @@ import {
   Wand2,
   Moon,
   Sun,
-  Palette
+  Palette,
+  Upload
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
@@ -65,6 +66,7 @@ export default function App() {
   
   // Customization states
   const [fontFamily, setFontFamily] = useState('handwriting');
+  const [customFontName, setCustomFontName] = useState<string | null>(null);
   const [textColor, setTextColor] = useState('#1e293b');
   const [bgColor, setBgColor] = useState('#ffffff');
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -172,7 +174,38 @@ export default function App() {
     }
   };
 
-  const currentFont = FONTS.find(f => f.id === fontFamily)?.className || 'font-sans';
+  const handleFontUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const fontName = 'CustomFont_' + Date.now();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        const newStyle = document.createElement('style');
+        newStyle.id = 'dynamic-font-style';
+        newStyle.appendChild(document.createTextNode(`
+          @font-face {
+            font-family: '${fontName}';
+            src: url('${content}');
+          }
+        `));
+        const prevStyle = document.getElementById('dynamic-font-style');
+        if (prevStyle) prevStyle.remove();
+        document.head.appendChild(newStyle);
+        setCustomFontName(fontName);
+        setFontFamily('custom');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const currentFontClass = fontFamily !== 'custom' 
+    ? (FONTS.find(f => f.id === fontFamily)?.className || 'font-sans') 
+    : '';
+
+  const currentFontStyles = fontFamily === 'custom' && customFontName 
+    ? { fontFamily: customFontName } 
+    : {};
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-slate-900' : 'bg-[#F0F7FF]'} font-sans overflow-hidden flex flex-col transition-colors duration-500`}>
@@ -249,7 +282,7 @@ export default function App() {
 
         <div
           ref={textRef}
-          className={`font-bold tracking-tight px-10 select-none will-change-transform ${currentFont} ${
+          className={`font-bold tracking-tight px-10 select-none will-change-transform ${currentFontClass} ${
             readingMode === 'teleponto' 
               ? 'whitespace-normal text-center w-full max-w-4xl leading-snug absolute top-0' 
               : 'whitespace-nowrap'
@@ -257,6 +290,7 @@ export default function App() {
           style={{ 
             fontSize: `${fontSize}px`,
             color: textColor,
+            ...currentFontStyles,
             transform: readingMode === 'marquee' 
               ? `translateX(${positionRef.current}px)`
               : `translateY(${positionRef.current}px)`
@@ -351,12 +385,12 @@ export default function App() {
                   <Settings2 className="w-4 h-4 text-purple-500" />
                   <span>Tipo de Letra</span>
                 </label>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {FONTS.map(f => (
                     <button
                       key={f.id}
                       onClick={() => setFontFamily(f.id)}
-                      className={`flex-1 py-2 px-3 rounded-xl border-2 font-bold transition-all ${
+                      className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl border-2 font-bold transition-all ${
                         fontFamily === f.id
                         ? 'bg-indigo-500 text-white border-indigo-500 shadow-md'
                         : isDarkMode 
@@ -367,6 +401,39 @@ export default function App() {
                       {f.label}
                     </button>
                   ))}
+                  
+                  {/* Custom Font Option */}
+                  {customFontName && (
+                    <button
+                      onClick={() => setFontFamily('custom')}
+                      style={{ fontFamily: customFontName }}
+                      className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl border-2 font-bold transition-all ${
+                        fontFamily === 'custom'
+                        ? 'bg-indigo-500 text-white border-indigo-500 shadow-md'
+                        : isDarkMode 
+                          ? 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-white'
+                      }`}
+                    >
+                      Custom
+                    </button>
+                  )}
+
+                  {/* Upload Button */}
+                  <label className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl border-2 border-dashed cursor-pointer font-bold transition-all ${
+                    isDarkMode 
+                      ? 'border-slate-600 text-slate-400 hover:border-indigo-400 hover:text-indigo-400' 
+                      : 'border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-500'
+                  }`}>
+                    <Upload className="w-4 h-4" />
+                    <span>Carregar .ttf</span>
+                    <input 
+                      type="file" 
+                      accept=".ttf,.otf" 
+                      className="hidden" 
+                      onChange={handleFontUpload}
+                    />
+                  </label>
                 </div>
               </div>
 
