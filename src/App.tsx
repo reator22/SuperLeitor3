@@ -88,8 +88,9 @@ export default function App() {
         return;
       }
 
-      // Movement step based on multiplier
-      positionRef.current -= (0.8 * multiplier);
+      // Movement step based on multiplier - Increased base speed from 0.8 to 1.2
+      // This allows higher speeds to be significantly faster
+      positionRef.current -= (1.2 * multiplier);
 
       // Reset when off-screen
       const textWidth = textRef.current.offsetWidth;
@@ -130,7 +131,7 @@ export default function App() {
     try {
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: `Cria uma pequena composição (história de 4-6 frases, cerca de 40-60 palavras) para uma criança de 7-8 anos aprender a ler em Português de Portugal. O tema é: ${themePrompt}. O texto deve ser numa linha só (sem quebras de linha), ser muito divertido e incluir vários emojis. Usa estritamente Português de Portugal (ex: comboio, autocarro, rabo, cáca, pequeno-almoço). Faz com que a história tenha um início, meio e fim.`,
+        contents: `Cria uma composição média/longa (história de 6-10 frases, cerca de 80-120 palavras) para uma criança de 8 anos aprender a ler em Português de Portugal. O tema é: ${themePrompt}. O texto deve ser numa linha só (sem quebras de linha), ser cativante, divertido e incluir vários emojis. Usa estritamente Português de Portugal (ex: comboio, autocarro, rabo, cáca, pequeno-almoço, frigorífico). A história deve ter um enredo claro com personagens e uma conclusão engraçada.`,
       });
       
       const newStory = response.text?.trim() || "";
@@ -346,7 +347,7 @@ export default function App() {
                   <input 
                     type="range" 
                     min="1" 
-                    max="5" 
+                    max="10" 
                     step="1"
                     value={multiplier} 
                     onChange={(e) => setMultiplier(parseInt(e.target.value))}
@@ -359,6 +360,11 @@ export default function App() {
                     <span>3x</span>
                     <span>4x</span>
                     <span>5x</span>
+                    <span>6x</span>
+                    <span>7x</span>
+                    <span>8x</span>
+                    <span>9x</span>
+                    <span>10x</span>
                   </div>
                 </div>
               </div>
