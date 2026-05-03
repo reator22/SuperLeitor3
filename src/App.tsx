@@ -55,14 +55,57 @@ export default function App() {
   const [selectedTheme, setSelectedTheme] = useState('');
   
   // Customization states
-  const [fontFamily, setFontFamily] = useState('sans');
+  const [fontFamily, setFontFamily] = useState('handwriting');
   const [textColor, setTextColor] = useState('#1e293b');
   const [bgColor, setBgColor] = useState('#ffffff');
   const [isDarkMode, setIsDarkMode] = useState(false);
 
+  // Animation Ref
+  const textRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const positionRef = useRef(0);
+  const animationIdRef = useRef<number>(null);
+
   const handleRestart = () => {
+    if (containerRef.current) {
+      positionRef.current = containerRef.current.offsetWidth;
+    }
     setResetKey(prev => prev + 1);
   };
+
+  // Initialize position on mount or when container changes
+  useEffect(() => {
+    if (containerRef.current) {
+      positionRef.current = containerRef.current.offsetWidth;
+    }
+  }, []);
+
+  // Animation Loop
+  useEffect(() => {
+    const animate = () => {
+      if (!isPlaying || !textRef.current || !containerRef.current || isGenerating) {
+        animationIdRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
+      // Movement step based on multiplier
+      positionRef.current -= (0.8 * multiplier);
+
+      // Reset when off-screen
+      const textWidth = textRef.current.offsetWidth;
+      if (positionRef.current < -textWidth) {
+        positionRef.current = containerRef.current.offsetWidth;
+      }
+
+      textRef.current.style.transform = `translateX(${positionRef.current}px)`;
+      animationIdRef.current = requestAnimationFrame(animate);
+    };
+
+    animationIdRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (animationIdRef.current) cancelAnimationFrame(animationIdRef.current);
+    };
+  }, [isPlaying, multiplier, isGenerating, text, fontFamily]);
 
   const toggleDarkMode = () => {
     if (!isDarkMode) {
@@ -87,7 +130,7 @@ export default function App() {
     try {
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: `Escreve uma história curta e muito simples (máximo 15-20 palavras) para uma criança de 6-8 anos aprender a ler em Português de Portugal. O tema é: ${themePrompt}. O texto deve ser divertido, ter uma linha só e incluir emojis. Usa estritamente Português de Portugal (ex: comboio, autocarro, rabo, cáca).`,
+        contents: `Cria uma pequena composição (história de 4-6 frases, cerca de 40-60 palavras) para uma criança de 7-8 anos aprender a ler em Português de Portugal. O tema é: ${themePrompt}. O texto deve ser numa linha só (sem quebras de linha), ser muito divertido e incluir vários emojis. Usa estritamente Português de Portugal (ex: comboio, autocarro, rabo, cáca, pequeno-almoço). Faz com que a história tenha um início, meio e fim.`,
       });
       
       const newStory = response.text?.trim() || "";
@@ -103,11 +146,6 @@ export default function App() {
   };
 
   const currentFont = FONTS.find(f => f.id === fontFamily)?.className || 'font-sans';
-  
-  // Calcular a duração: quanto maior o multiplicador, menor a duração.
-  // Base: 40 caracteres demoram 20 segundos a 1x.
-  const baseDuration = (text.length * 0.5);
-  const duration = baseDuration / multiplier;
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-slate-900' : 'bg-[#F0F7FF]'} font-sans overflow-hidden flex flex-col transition-colors duration-500`}>
@@ -140,6 +178,7 @@ export default function App() {
 
       {/* Main Reading Area */}
       <main 
+        ref={containerRef}
         className="flex-1 relative flex items-center m-4 rounded-[2.5rem] shadow-2xl overflow-hidden border-4 border-white transition-all duration-300"
         style={{ backgroundColor: bgColor }}
       >
@@ -162,25 +201,17 @@ export default function App() {
           </div>
         )}
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={resetKey + (isPlaying ? 'playing' : 'paused') + text + fontFamily}
-            initial={{ x: '100vw' }}
-            animate={isPlaying ? { x: '-200%' } : {}}
-            transition={{
-              duration: duration, 
-              repeat: Infinity,
-              ease: "linear"
-            }}
-            className={`whitespace-nowrap font-bold tracking-tight px-10 select-none ${currentFont}`}
-            style={{ 
-              fontSize: `${fontSize}px`,
-              color: textColor
-            }}
-          >
-            {text}
-          </motion.div>
-        </AnimatePresence>
+        <div
+          ref={textRef}
+          className={`whitespace-nowrap font-bold tracking-tight px-10 select-none will-change-transform ${currentFont}`}
+          style={{ 
+            fontSize: `${fontSize}px`,
+            color: textColor,
+            transform: `translateX(${positionRef.current}px)`
+          }}
+        >
+          {text}
+        </div>
 
         {/* Guides */}
         <div 
