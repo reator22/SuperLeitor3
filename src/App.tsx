@@ -48,11 +48,14 @@ const FONTS = [
 export default function App() {
   const [text, setText] = useState("O rato roeu a rolha da garrafa do rei de Roma. 🐭 O rápido raposo salta sobre o cão preguiçoso! 🦊");
   const [multiplier, setMultiplier] = useState(1); 
+  const [readingMode, setReadingMode] = useState<'marquee' | 'teleponto'>('marquee');
   const multiplierRef = useRef(multiplier);
+  const readingModeRef = useRef(readingMode);
 
   useEffect(() => {
     multiplierRef.current = multiplier;
-  }, [multiplier]);
+    readingModeRef.current = readingMode;
+  }, [multiplier, readingMode]);
 
   const [fontSize, setFontSize] = useState(72);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -73,8 +76,12 @@ export default function App() {
   const animationIdRef = useRef<number>(null);
 
   const handleRestart = () => {
-    if (containerRef.current) {
-      positionRef.current = containerRef.current.offsetWidth;
+    if (containerRef.current && textRef.current) {
+      if (readingModeRef.current === 'marquee') {
+        positionRef.current = containerRef.current.offsetWidth;
+      } else {
+        positionRef.current = containerRef.current.offsetHeight;
+      }
     }
     setResetKey(prev => prev + 1);
   };
@@ -82,9 +89,13 @@ export default function App() {
   // Initialize position on mount or when container changes
   useEffect(() => {
     if (containerRef.current) {
-      positionRef.current = containerRef.current.offsetWidth;
+      if (readingModeRef.current === 'marquee') {
+        positionRef.current = containerRef.current.offsetWidth;
+      } else {
+        positionRef.current = containerRef.current.offsetHeight;
+      }
     }
-  }, []);
+  }, [readingMode]);
 
   // Animation Loop
   useEffect(() => {
@@ -94,17 +105,26 @@ export default function App() {
         return;
       }
 
-      // Movement step based on multiplier - Increased base speed for 1x
-      // We use multiplierRef to allow real-time changes without restarting the loop
-      positionRef.current -= (1.5 * multiplierRef.current);
+      const mult = multiplierRef.current;
+      const mode = readingModeRef.current;
 
-      // Reset when off-screen
-      const textWidth = textRef.current.offsetWidth;
-      if (positionRef.current < -textWidth) {
-        positionRef.current = containerRef.current.offsetWidth;
+      if (mode === 'marquee') {
+        positionRef.current -= (1.5 * mult);
+        const textWidth = textRef.current.offsetWidth;
+        if (positionRef.current < -textWidth) {
+          positionRef.current = containerRef.current.offsetWidth;
+        }
+        textRef.current.style.transform = `translateX(${positionRef.current}px)`;
+      } else {
+        // Vertical Teleponto
+        positionRef.current -= (0.8 * mult);
+        const textHeight = textRef.current.offsetHeight;
+        if (positionRef.current < -textHeight) {
+          positionRef.current = containerRef.current.offsetHeight;
+        }
+        textRef.current.style.transform = `translateY(${positionRef.current}px)`;
       }
 
-      textRef.current.style.transform = `translateX(${positionRef.current}px)`;
       animationIdRef.current = requestAnimationFrame(animate);
     };
 
@@ -137,7 +157,7 @@ export default function App() {
     try {
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: `Cria uma composição literária para o 1º ciclo (história de 8-12 frases, cerca de 100-150 palavras) para uma criança portuguesa de 8 anos. O tema é: ${themePrompt}. O texto deve ser numa linha contínua (sem quebras), ser muito divertido, educativo e incluir emojis adequados. Usa rigorosamente o Português de Portugal (ex: comboio, autocarro, pequeno-almoço, frigorífico, sapatilhas). A história deve ter personagens identificáveis e um final que faça rir.`,
+        contents: `Cria uma composição literária para o 1º ciclo (uma história com 10-15 frases, cerca de 120-180 palavras) para uma criança portuguesa de 8 anos que está a aprender a ler. O tema é: ${themePrompt}. O texto deve ser cativante, muito divertido, educativo e incluir emojis adequados. Usa rigorosamente o Português de Portugal (ex: utiliza "comboio", "autocarro", "pequeno-almoço", "frigorífico", "sapatilhas", "rabo", "canalha"). A história deve ter um enredo com personagens, diálogos curtos e um final engraçado. Podes usar quebras de linha entre parágrafos.`,
       });
       
       const newStory = response.text?.trim() || "";
@@ -164,6 +184,25 @@ export default function App() {
           </div>
           <h1 className="text-2xl font-black tracking-tight">SUPER LEITOR</h1>
         </div>
+
+        {/* Mode Selector */}
+        <div className="hidden md:flex bg-slate-100 p-1 rounded-2xl border-2 border-slate-50 shadow-inner gap-1">
+          <button 
+            onClick={() => setReadingMode('marquee')}
+            className={`px-4 py-1.5 rounded-xl text-[10px] font-black transition-all flex items-center gap-2 ${readingMode === 'marquee' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-white'}`}
+          >
+            <ChevronRight className="w-3 h-3" />
+            DESLIZE
+          </button>
+          <button 
+            onClick={() => setReadingMode('teleponto')}
+            className={`px-4 py-1.5 rounded-xl text-[10px] font-black transition-all flex items-center gap-2 ${readingMode === 'teleponto' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-white'}`}
+          >
+            <Maximize2 className="w-3 h-3 rotate-90" />
+            TELEPONTO
+          </button>
+        </div>
+
         <div className="flex items-center gap-4">
           <button
             onClick={toggleDarkMode}
@@ -186,7 +225,7 @@ export default function App() {
       {/* Main Reading Area */}
       <main 
         ref={containerRef}
-        className="flex-1 relative flex items-center m-4 rounded-[2.5rem] shadow-2xl overflow-hidden border-4 border-white transition-all duration-300"
+        className="flex-1 min-h-[300px] relative flex items-center justify-center m-4 rounded-[2.5rem] shadow-2xl overflow-hidden border-4 border-white transition-all duration-300"
         style={{ backgroundColor: bgColor }}
       >
         {/* Background Grid Accent */}
@@ -210,25 +249,46 @@ export default function App() {
 
         <div
           ref={textRef}
-          className={`whitespace-nowrap font-bold tracking-tight px-10 select-none will-change-transform ${currentFont}`}
+          className={`font-bold tracking-tight px-10 select-none will-change-transform ${currentFont} ${
+            readingMode === 'teleponto' 
+              ? 'whitespace-normal text-center w-full max-w-4xl leading-snug absolute top-0' 
+              : 'whitespace-nowrap'
+          }`}
           style={{ 
             fontSize: `${fontSize}px`,
             color: textColor,
-            transform: `translateX(${positionRef.current}px)`
+            transform: readingMode === 'marquee' 
+              ? `translateX(${positionRef.current}px)`
+              : `translateY(${positionRef.current}px)`
           }}
         >
           {text}
         </div>
 
         {/* Guides */}
-        <div 
-          className="absolute left-0 top-0 bottom-0 w-32 pointer-events-none z-10" 
-          style={{ background: `linear-gradient(to right, ${bgColor}, ${bgColor}CC, transparent)` }}
-        />
-        <div 
-          className="absolute right-0 top-0 bottom-0 w-32 pointer-events-none z-10" 
-          style={{ background: `linear-gradient(to left, ${bgColor}, ${bgColor}CC, transparent)` }}
-        />
+        {readingMode === 'marquee' ? (
+          <>
+            <div 
+              className="absolute left-0 top-0 bottom-0 w-32 pointer-events-none z-10" 
+              style={{ background: `linear-gradient(to right, ${bgColor}, ${bgColor}CC, transparent)` }}
+            />
+            <div 
+              className="absolute right-0 top-0 bottom-0 w-32 pointer-events-none z-10" 
+              style={{ background: `linear-gradient(to left, ${bgColor}, ${bgColor}CC, transparent)` }}
+            />
+          </>
+        ) : (
+          <>
+            <div 
+              className="absolute top-0 left-0 right-0 h-32 pointer-events-none z-10" 
+              style={{ background: `linear-gradient(to bottom, ${bgColor}, ${bgColor}CC, transparent)` }}
+            />
+            <div 
+              className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none z-10" 
+              style={{ background: `linear-gradient(to top, ${bgColor}, ${bgColor}CC, transparent)` }}
+            />
+          </>
+        )}
       </main>
 
       {/* Control Panel */}
