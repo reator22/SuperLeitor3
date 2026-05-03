@@ -5,12 +5,9 @@ import {defineConfig, loadEnv} from 'vite';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
-  // Se estivermos a construir para o GitHub Pages, usamos o nome do repositório como base
-  // Caso contrário, usamos '/'
-  const isGitHubPages = process.env.NODE_ENV === 'production';
   
   return {
-    base: './', // Usar caminhos relativos para funcionar em qualquer subpasta
+    base: '/', // Vercel e a maioria dos deploys modernos preferem base root
     plugins: [react(), tailwindcss()],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
