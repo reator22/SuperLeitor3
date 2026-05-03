@@ -10,7 +10,7 @@ export default defineConfig(({mode}) => {
     base: '/', // Vercel e a maioria dos deploys modernos preferem base root
     plugins: [react(), tailwindcss()],
     define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
     },
     resolve: {
       alias: {

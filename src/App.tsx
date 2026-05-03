@@ -23,7 +23,13 @@ import {
 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const getAI = () => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey === "undefined") {
+    return null;
+  }
+  return new GoogleGenAI({ apiKey });
+};
 
 const STORY_THEMES = [
   { id: 'dinosaurs', label: 'Dinossauros', icon: '🦖', prompt: 'uma história curta sobre um dinossauro amigo' },
@@ -71,6 +77,11 @@ export default function App() {
   };
 
   const generateStory = async (themePrompt: string, themeLabel: string) => {
+    const ai = getAI();
+    if (!ai) {
+      alert("A chave da API (GEMINI_API_KEY) não está configurada. Por favor, configura as Variáveis de Ambiente no Vercel.");
+      return;
+    }
     setIsGenerating(true);
     setSelectedTheme(themeLabel);
     try {
