@@ -210,33 +210,33 @@ export default function App() {
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-slate-900' : 'bg-[#F0F7FF]'} font-sans overflow-hidden flex flex-col transition-colors duration-500`}>
       {/* Header */}
-      <header className={`p-4 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-blue-100'} border-b-2 flex justify-between items-center z-10 shrink-0 transition-colors`}>
+      <header className={`p-4 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-blue-100'} border-b-2 flex flex-col sm:flex-row justify-between items-center gap-4 z-10 shrink-0 transition-colors`}>
         <div className="flex items-center gap-3">
           <div className="bg-blue-500 p-2 rounded-2xl shadow-lg shadow-blue-200">
-            <BookOpen className="text-white w-6 h-6" />
+            <BookOpen className="text-white w-5 h-5 sm:w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-black tracking-tight">SUPER LEITOR</h1>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight whitespace-nowrap">SUPER LEITOR</h1>
         </div>
 
-        {/* Mode Selector */}
-        <div className="hidden md:flex bg-slate-100 p-1 rounded-2xl border-2 border-slate-50 shadow-inner gap-1">
+        {/* Mode Selector - Visible on mobile */}
+        <div className="flex bg-slate-100 p-1 rounded-2xl border-2 border-slate-50 shadow-inner gap-1">
           <button 
             onClick={() => setReadingMode('marquee')}
-            className={`px-4 py-1.5 rounded-xl text-[10px] font-black transition-all flex items-center gap-2 ${readingMode === 'marquee' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-white'}`}
+            className={`px-3 sm:px-4 py-1.5 rounded-xl text-[10px] font-black transition-all flex items-center gap-2 ${readingMode === 'marquee' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-white'}`}
           >
             <ChevronRight className="w-3 h-3" />
-            DESLIZE
+            <span>DESLIZE</span>
           </button>
           <button 
             onClick={() => setReadingMode('teleponto')}
-            className={`px-4 py-1.5 rounded-xl text-[10px] font-black transition-all flex items-center gap-2 ${readingMode === 'teleponto' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-white'}`}
+            className={`px-3 sm:px-4 py-1.5 rounded-xl text-[10px] font-black transition-all flex items-center gap-2 ${readingMode === 'teleponto' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-white'}`}
           >
             <Maximize2 className="w-3 h-3 rotate-90" />
-            TELEPONTO
+            <span>TELEPONTO</span>
           </button>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={toggleDarkMode}
             className={`p-2 rounded-xl transition-all ${isDarkMode ? 'bg-amber-400 text-slate-900' : 'bg-slate-100 text-slate-600'}`}
@@ -335,10 +335,7 @@ export default function App() {
               <div className="bg-white/20 p-2 rounded-xl">
                 <Wand2 className="text-white w-6 h-6" />
               </div>
-              <h2 className="text-xl font-black text-white tracking-wide uppercase text-shadow-sm">História Mágica (IA)</h2>
-              <span className="bg-white/10 text-white/80 px-3 py-1 rounded-full text-xs font-bold ml-auto">
-                Gemini AI
-              </span>
+              <h2 className="text-xl font-black text-white tracking-wide uppercase text-shadow-sm">Criar Texto</h2>
             </div>
             
             <div className="flex flex-wrap gap-3">
